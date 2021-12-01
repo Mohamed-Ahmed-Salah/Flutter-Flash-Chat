@@ -7,23 +7,29 @@ import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 class LoginScreen extends StatefulWidget {
   static const String id = 'login_screen';
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  bool showSpinner = false;
-  final _auth = FirebaseAuth.instance;
-  String email;
-  String password;
+  String email, password;
+  bool _saving=false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final fieldText = TextEditingController();
+  final fieldText2 = TextEditingController();
+  void clearText() {
+    fieldText.clear();
+    fieldText2.clear();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: ModalProgressHUD(
-        inAsyncCall: showSpinner,
-        child: Padding(
+    return ModalProgressHUD(
+      inAsyncCall: _saving,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Padding(
           padding: EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -42,6 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 48.0,
               ),
               TextField(
+                controller: fieldText,
                 keyboardType: TextInputType.emailAddress,
                 textAlign: TextAlign.center,
                 onChanged: (value) {
@@ -54,6 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 8.0,
               ),
               TextField(
+                controller: fieldText2,
                 obscureText: true,
                 textAlign: TextAlign.center,
                 onChanged: (value) {
@@ -70,20 +78,30 @@ class _LoginScreenState extends State<LoginScreen> {
                 colour: Colors.lightBlueAccent,
                 onPressed: () async {
                   setState(() {
-                    showSpinner = true;
+                    _saving=true;
                   });
                   try {
-                    final user = await _auth.signInWithEmailAndPassword(
-                        email: email, password: password);
-                    if (user != null) {
-                      Navigator.pushNamed(context, ChatScreen.id);
-                    }
-
+                    UserCredential userCredential =
+                        await _auth.signInWithEmailAndPassword(
+                            email: email, password: password);
+                    Navigator.pushNamed(context, ChatScreen.id);
                     setState(() {
-                      showSpinner = false;
+                      _saving=false;
+                      clearText();
                     });
-                  } catch (e) {
-                    print(e);
+                  } on FirebaseAuthException catch (e) {
+                    if (e.code == 'user-not-found') {
+                      print('No user found for that email.');
+                      setState(() {
+                        _saving=false;
+                      });
+                    } else if (e.code == 'wrong-password') {
+                      print('Wrong password provided for that user.');
+                      setState(() {
+
+                        _saving=false;
+                      });
+                    }
                   }
                 },
               ),
