@@ -83,7 +83,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               title: 'Log In',
               colour: Colors.lightBlueAccent,
               onPressed: () {
-                Navigator.pushNamed(context, MoviesPage.id);
+                Navigator.pushNamed(context, LoginScreen.id);
               },
             ),
             RoundedButton(
